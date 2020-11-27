@@ -26,14 +26,23 @@ const getBall = async () => {
   return balldsdr;
 }
 
-export const dt = (socket: Socket) => {
+const getScore = async () => {
+  let score = await page.evaluate(() =>
+    // @ts-ignore
+    app.root.findByName('Ball').script.score.winner
+  );
+  return score;
+}
+
+export const dt = async (socket: Socket) => {
   timer = setInterval(async () => {
     let balldsdr = await getBall();
     socket.emit('setBalldsdr', balldsdr);
     socket.broadcast.emit('setBalldsdr', balldsdr);
+    let winner = await getScore();
+    if (winner !== 'None') {
+      socket.emit('winner', winner);
+      socket.broadcast.emit('winner', winner);
+    }
   }, 16);
-}
-
-export const test = () => {
-  console.log('In test');
 }

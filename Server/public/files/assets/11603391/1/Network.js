@@ -52,16 +52,12 @@ Network.prototype.initialize = function() {
     socket.on ('nextGame', function(time, players) {
         self.newGame(time, players);
     });
-    
+    */
     
     // Sync Scores
-    this.app.on("scored", function (team) {
-        socket.emit('scored', team);
-    });
-    socket.on ('displayScore', function(team) {
-        self.displayScore(team);
-    });
-    */
+    socket.on ('winner', function (winner) {
+        self.displayScore(winner);
+    })
     
     // Sync Balls
     socket.on('setBalldsdr', function (balldsdr) {
