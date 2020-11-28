@@ -77,8 +77,14 @@ Network.prototype.initialize = function() {
     socket.on ('notHost', function () {
         self.hosts("notHost");
     });
-    
-    // Sync Bullets
+    */
+
+    // Sync Bullet
+    socket.on('setBullets', function (bullets) {
+        app.fire('setBullets', bullets);
+    })
+
+    /*
     this.app.on ('bulletFired', function(x, y, z, w) {
         socket.emit("bulletFired", x, y, z, w);
     });

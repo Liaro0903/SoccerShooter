@@ -26,6 +26,19 @@ const getBall = async () => {
   return balldsdr;
 }
 
+const getBullets = async () => {
+  let bullets = await page.evaluate(() => {
+    // @ts-ignore
+    return app.root.findByName('BulletFolder').children.map((bullet) => ({
+      // @ts-ignore
+      id: bullet._guid,
+      // @ts-ignore
+      pos: bullet.getPosition(),
+    }));
+  });
+  return bullets;
+}
+
 const getScore = async () => {
   let score = await page.evaluate(() =>
     // @ts-ignore
@@ -39,6 +52,11 @@ export const dt = async (socket: Socket) => {
     let balldsdr = await getBall();
     socket.emit('setBalldsdr', balldsdr);
     socket.broadcast.emit('setBalldsdr', balldsdr);
+    
+    let bullets = await getBullets();
+    socket.emit('setBullets', bullets);
+    socket.broadcast.emit('setBullets', bullets);
+
     let winner = await getScore();
     if (winner !== 'None') {
       socket.emit('winner', winner);
