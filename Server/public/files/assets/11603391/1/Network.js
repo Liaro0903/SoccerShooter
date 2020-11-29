@@ -21,7 +21,7 @@ Network.prototype.initialize = function() {
     this.initialCamera = this.app.root.findByName('InitialCamera');
     
     // Game states
-    this.app.on ('startGame', function (title) {
+    app.on ('startGame', function (title) {
         socket.emit('initialize', title);
     });
     
@@ -82,6 +82,10 @@ Network.prototype.initialize = function() {
     // Sync Bullet
     socket.on('setBullets', function (bullets) {
         app.fire('setBullets', bullets);
+    })
+
+    app.on('bulletFired', function (spawnPointData) {
+        socket.emit('bulletFired', spawnPointData);
     })
 
     /*

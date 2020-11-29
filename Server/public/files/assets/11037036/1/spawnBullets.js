@@ -2,7 +2,6 @@
 /* jshint strict:global */
 /* globals pc, console, setTimeout */
 
-
 var SpawnBullets = pc.createScript('spawnBullets');
 SpawnBullets.attributes.add('spawnPoint', { type: 'entity' });
 SpawnBullets.attributes.add('gun', { type: 'entity' });
@@ -25,17 +24,17 @@ SpawnBullets.prototype.initialize = function () {
 
     this.bulletPrefab.enabled = false;
 
-    //this.lastFireTime = Date.now();
     this.mouseclicked = false;
 
     var self = this;
-    this.bullet2 = this.app.root.findByName('Bullet2');
     this.bulletFolder = this.app.root.findByName('BulletFolder');
+
+    // Only used by client
+    this.bullet2 = this.app.root.findByName('Bullet2');
     this.bullets = {};
 
-    this.app.on('newBullet', function (x, y, z, w) {
-        self.shoot2(x, y, z, w);
-    });
+    // Only used by server
+    this.spawnPoints = [];
 
     this.app.on('setBullets', function (bullets) {
         self.setBullets(bullets);
@@ -45,17 +44,32 @@ SpawnBullets.prototype.initialize = function () {
 // update code called every frame
 SpawnBullets.prototype.update = function (dt) {
     if (this.app.mouse.isPressed(pc.MOUSEBUTTON_LEFT) && this.mouseclicked === false) {
+        var team = this.entity.tags.list()[0];
+        var spawnPoint = this.spawnPoint.getPosition();
+        var gunVec = this.gun.forward.scale(this.bulletImpulse);
+        this.app.fire('bulletFired', {
+            team, spawnPoint, gunVec
+        });
+        this.mouseclicked = true;
+        /* Server or debugging code
         this.shoot();
+        */
     }
     if (!this.app.mouse.isPressed(pc.MOUSEBUTTON_LEFT)) {
         this.mouseclicked = false;
     }
+    // Server code
+    if (this.spawnPoints.length !== 0) {
+        var spawnPoint = this.spawnPoints.shift();
+        this.shootFromClient(spawnPoint);
+    }
 };
 
+// Use for single player or debugging
 SpawnBullets.prototype.shoot = function () {
     /** @type {pc.Entity.prototype} */
     var newBullet = this.bulletPrefab.clone();
-    //Determine which team this bullet is from
+    // Determine which team this bullet is from
     var team = '';
     if (this.entity.tags.has('Hero')) {
         newBullet.tags.add('Hero');
@@ -69,31 +83,13 @@ SpawnBullets.prototype.shoot = function () {
     newBullet.rigidbody.teleport(this.spawnPoint.getPosition(), this.spawnPoint.getRotation());
     newBullet.rigidbody.applyImpulse(this.gun.forward.scale(this.bulletImpulse));
     this.mouseclicked = true;
-    //Destroy Bullet scripts
+    // Destroy Bullet scripts
     setTimeout(function () {
         newBullet.destroy();
     }, 5000);
 };
 
-SpawnBullets.prototype.shoot2 = function (x, y, z, w) {
-    /** @type {pc.Entity.prototype} */
-    var newBullet = this.bulletPrefab.clone();
-    //Determine which team this bullet is from
-    newBullet.tags.add(w);
-    this.app.root.addChild(newBullet);
-    newBullet.enabled = true;
-    var p = new pc.Vec3(x['data'][0], x['data'][1], x['data'][2]);
-    var r = new pc.Quat(y.x, y.y, y.z, y.w);
-    newBullet.rigidbody.teleport(p, r);
-    //console.log(z['data'][0], z['data'][1], z['data'][2]);
-    //var i = new pc.Vec3(z['data'][0], z['data'][1], z['data'][2]);
-    newBullet.rigidbody.applyImpulse(z['data'][0], z['data'][1], z['data'][2]);
-    //Destroy Bullet scripts
-    setTimeout(function () {
-        newBullet.destroy();
-    }, 5000);
-};
-
+// Client code
 SpawnBullets.prototype.setBullets = function (bullets) {
     var localBullets = this.bullets;
     var self = this;
@@ -111,6 +107,7 @@ SpawnBullets.prototype.setBullets = function (bullets) {
     });
 }
 
+// Client code
 SpawnBullets.prototype.createBullet2 = function () {
     var newBullet = this.bullet2.clone();
     this.bulletFolder.addChild(newBullet);
@@ -118,5 +115,26 @@ SpawnBullets.prototype.createBullet2 = function () {
     return newBullet;
 }
 
-// to learn more about script anatomy, please read:
-// http://developer.playcanvas.com/en/user-manual/scripting/
+// Server code
+SpawnBullets.prototype.shootFromClient = function (q) {
+    /** @type {pc.Entity.prototype} */
+    var newBullet = this.bulletPrefab.clone();
+    // Determine which team this bullet is from
+    var team = '';
+    if (q.team === 'Hero') {
+        newBullet.tags.add('Hero');
+        team = 'Hero';
+    } else {
+        newBullet.tags.add('Enemy');
+        team = 'Enemy';
+    }
+    this.bulletFolder.addChild(newBullet);
+    newBullet.enabled = true;
+    newBullet.rigidbody.teleport(q.spawnPoint.x, q.spawnPoint.y, q.spawnPoint.z);
+    newBullet.rigidbody.applyImpulse(q.gunVec.x, q.gunVec.y, q.gunVec.z);
+    this.mouseclicked = true;
+    //Destroy Bullet scripts
+    setTimeout(function () {
+        newBullet.destroy();
+    }, 5000);
+}

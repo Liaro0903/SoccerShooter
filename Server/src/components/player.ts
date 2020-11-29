@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 
-interface Vector {
+export interface Vector {
   x: number;
   y: number;
   z: number;

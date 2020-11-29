@@ -1,5 +1,6 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { Socket } from 'socket.io';
+import { Vector } from './player';
 
 let browser: Browser;
 let page: Page;
@@ -24,6 +25,20 @@ const getBall = async () => {
     rot: app.root.findByName('Ball').getEulerAngles(),
   }));
   return balldsdr;
+}
+
+export interface ISpawnPointData {
+  team: string;
+  spawnPoint: Vector;
+  gunVec: Vector;
+}
+
+export const sendSpawnBullets = async (spawnPointData: ISpawnPointData) => {
+  await page.evaluate((spawnPointData: ISpawnPointData) => {
+    // @ts-ignore
+    app.root.findByName('Player').script.spawnBullets.spawnPoints.push(spawnPointData);
+    // @ts-ignore
+  }, spawnPointData);
 }
 
 const getBullets = async () => {

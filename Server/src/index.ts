@@ -4,7 +4,13 @@ import * as path from 'path';
 import { Server, Socket } from 'socket.io';
 
 import Players, { dsdrSync } from './components/players';
-import { initializeServer, closeServer, dt } from './components/puppet';
+import {
+  closeServer,
+  dt,
+  ISpawnPointData,
+  initializeServer,
+  sendSpawnBullets
+} from './components/puppet';
 
 const PORT = 3000;
 const app = express();
@@ -55,6 +61,9 @@ io.on('connection', (socket: Socket) => {
   socket.on('setRemotedsdr', (dsdr: dsdrSync) => {
     players.setPlayer(dsdr);
     socket.broadcast.emit('setLocaldsdr', dsdr);
+  })
+  socket.on('bulletFired', (spawnPointData: ISpawnPointData) => {
+    sendSpawnBullets(spawnPointData);
   })
 });
 
