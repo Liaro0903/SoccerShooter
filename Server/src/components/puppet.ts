@@ -1,5 +1,6 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Socket } from 'socket.io';
+import * as socketio from 'socket.io';
+// import { Socket } from 'socket.io';
 import { Vector } from './player';
 
 let browser: Browser;
@@ -17,14 +18,23 @@ export const closeServer = async () => {
   await browser.close();
 }
 
-const getBall = async () => {
-  let balldsdr = await page.evaluate(() => ({
+const getEntities = async () => {
+  let entities = await page.evaluate(() => ({
+    ball: {
+      // @ts-ignore
+      pos: app.root.findByName('Ball').getPosition(),
+      // @ts-ignore
+      rot: app.root.findByName('Ball').getEulerAngles(),
+    },
     // @ts-ignore
-    pos: app.root.findByName('Ball').getPosition(),
-    // @ts-ignore
-    rot: app.root.findByName('Ball').getEulerAngles(),
+    bullets: app.root.findByName('BulletFolder').children.map((bullet) => ({
+      // @ts-ignore
+      id: bullet._guid,
+      // @ts-ignore
+      pos: bullet.getPosition(),
+    }))
   }));
-  return balldsdr;
+  return entities;
 }
 
 export interface ISpawnPointData {
@@ -41,19 +51,6 @@ export const sendSpawnBullets = async (spawnPointData: ISpawnPointData) => {
   }, spawnPointData);
 }
 
-const getBullets = async () => {
-  let bullets = await page.evaluate(() => {
-    // @ts-ignore
-    return app.root.findByName('BulletFolder').children.map((bullet) => ({
-      // @ts-ignore
-      id: bullet._guid,
-      // @ts-ignore
-      pos: bullet.getPosition(),
-    }));
-  });
-  return bullets;
-}
-
 const getScore = async () => {
   let score = await page.evaluate(() =>
     // @ts-ignore
@@ -62,20 +59,18 @@ const getScore = async () => {
   return score;
 }
 
-export const dt = async (socket: Socket) => {
+export const dt = async (socket: socketio.Socket, io: socketio.Server) => {
+  let emittedWinner = false;
   timer = setInterval(async () => {
-    let balldsdr = await getBall();
-    socket.emit('setBalldsdr', balldsdr);
-    socket.broadcast.emit('setBalldsdr', balldsdr);
-    
-    let bullets = await getBullets();
-    socket.emit('setBullets', bullets);
-    socket.broadcast.emit('setBullets', bullets);
+    let dsdr = await getEntities();
+    io.emit('setdsdr', dsdr);
 
     let winner = await getScore();
-    if (winner !== 'None') {
+    if (winner !== 'None' && !emittedWinner) {
       socket.emit('winner', winner);
       socket.broadcast.emit('winner', winner);
+      emittedWinner = true;
+      console.log('Winner emitted');
     }
   }, 16);
 }

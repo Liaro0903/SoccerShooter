@@ -24,7 +24,7 @@ let players = new Players();
 const initialize = (socket: Socket, title: string) => {
   // Starts puppet timer if first
   if (players.getLength() === 0) {
-    dt(socket);
+    dt(socket, io);
   }
   let newPlayer = players.addPlayer(socket, title);
   console.log(players);

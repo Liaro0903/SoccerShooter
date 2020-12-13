@@ -54,16 +54,18 @@ Network.prototype.initialize = function() {
     });
     */
     
+    // Sync entities (ball and bullets)
+    socket.on('setdsdr', function (dsdr) {
+        self.moveBall(dsdr.ball);
+        app.fire('setBullets', dsdr.bullets);
+    })
+
     // Sync Scores
     socket.on ('winner', function (winner) {
         self.displayScore(winner);
     })
-    
-    // Sync Balls
-    socket.on('setBalldsdr', function (balldsdr) {
-        self.moveBall(balldsdr);
-    })
-    /*
+
+   /*
     this.app.on ('host', function() {
         self.hosts("host"); //hosts function- change this.host to true.
         socket.emit('isHost');
