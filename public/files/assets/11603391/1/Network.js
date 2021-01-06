@@ -3,12 +3,12 @@
 var Network = pc.createScript('network');
 
 Network.prototype.initialize = function() {
-    // this.socket = io.connect('https://socshoot0-2.glitch.me');
+    // this.socket = io.connect('https://socshoot0-3.glitch.me');
     this.socket = io.connect('http://localhost:3000');
     var socket = this.socket;
     var self = this;
     var app = this.app;
-    this.gameStarted = false;
+    this.initialized = false;  // True when receive player data
     
     // Player Variables
     this.player = this.app.root.findByName('Player');
@@ -21,9 +21,20 @@ Network.prototype.initialize = function() {
     this.initialCamera = this.app.root.findByName('InitialCamera');
     
     /* Game states */
-    app.on('startGame', function(title) {
-        socket.emit('initialize', title);
-        self.startGame();  // Will be deleted after testing
+    app.on('createRoom', function(username) {
+       socket.emit('createRoom', username);
+    });
+    
+    app.on('isRoomValid', function(code) {
+        socket.emit('isRoomValid', code);
+    });
+    
+    socket.on('foundIsRoomValid', function(result) {
+        app.fire('foundIsRoomValid', result);
+    });
+    
+    app.on('joinRoom', function(code, username) {
+        socket.emit('joinRoom', code, username);
     });
     /*
     socket.on ('nextGame', function(time, players) {
@@ -35,7 +46,7 @@ Network.prototype.initialize = function() {
     
     // After initialized, get all players data
     socket.on('playerData', function(data) {
-        // self.startGame();
+        self.startMultiGame();
         self.initializePlayers(data);
     });
     
@@ -76,12 +87,13 @@ Network.prototype.initialize = function() {
 };
 
 Network.prototype.update = function(dt) {
-    this.setRemotedsdr();
+    if (this.initialized) {
+        this.setRemotedsdr();
+    }
 };
 
 /* Game states */
-Network.prototype.startGame = function() {
-    this.gameStarted = true;
+Network.prototype.startMultiGame = function() {
     this.initialCamera.enabled = false;
     this.player.enabled = true;
     this.ball.enabled = false;
@@ -141,10 +153,12 @@ Network.prototype.newGame = function(time, players) {
 Network.prototype.initializePlayers = function(data) {
     this.players = data.players;
     this.id = data.id;
+    this.room = data.room;
     
     // UI updates
     var myTeam = this.players[this.id].team;
     this.app.fire('updateConnected', Object.keys(this.players).length);
+    this.app.fire('updateCode', this.room);
     this.app.fire('updateTeam', myTeam);
     
     // Create player entities
@@ -198,9 +212,11 @@ Network.prototype.setLocaldsdr = function(dsdr) {
 };
 
 Network.prototype.deletePlayer = function(id) {
-    this.players[id].entity.enabled = false;
-    delete this.players[id];
-    this.app.fire('updateConnected', Object.keys(this.players).length);
+    if (this.initialized) {
+        this.players[id].entity.enabled = false;
+        delete this.players[id];
+        this.app.fire('updateConnected', Object.keys(this.players).length);   
+    }
 };
 
 Network.prototype.setRemotedsdr = function() {
@@ -221,9 +237,8 @@ Network.prototype.setRemotedsdr = function() {
 
 /* Sync entities (ball and bullets) */
 Network.prototype.moveBall = function(ball) {
-    if (this.gameStarted) {
+    if (this.initialized) {
         this.ball2.setPosition(ball.pos.x, ball.pos.y, ball.pos.z);
-        // this.ball2.setLocalEulerAngles(ball.rot.x, ball.rot.y, ball.rot.z);
         var q = new pc.Quat(ball.rot.x, ball.rot.y, ball.rot.z, ball.rot.w);
         this.ball2.setRotation(q);
     }

@@ -16,10 +16,11 @@ class Universe {
   enemygoalbox: number;
   sphereMaterial: CANNON.Material;
   io: Server;
+  code: string;
   timer: any;
 
   /* Constructs the world */
-  constructor(io: Server) {
+  constructor(code: string, io: Server) {
     // Setup world
     this.world = new CANNON.World();
     this.world.gravity.set(0, 0, -9.81);
@@ -30,6 +31,7 @@ class Universe {
     this.herogoalbox = 0;
     this.enemygoalbox = 0;
     this.io = io;
+    this.code = code;
 
     // Setup Ball
     this.sphereMaterial = new CANNON.Material('sphere');
@@ -89,11 +91,11 @@ class Universe {
 
   /* Method of simulating physics */
   dt = () => {
-    let { ball, bullets, io, world } = this;
+    let { ball, bullets, code, io, world } = this;
     let timeStep = 1.0 / 60.0;
     this.timer = setInterval(() => {
       world.step(timeStep);
-      io.emit('setdsdr', {
+      io.to(code).emit('setdsdr', {
         ball: {
           pos: {
             x: ball.body.position.x,
@@ -155,10 +157,10 @@ class Universe {
     }
     // When player goals
     if ((e.body.id) === this.herogoalbox) {
-      this.io.emit('winner', 'Enemy');
+      this.io.to(this.code).emit('winner', 'Enemy');
     }
     if (e.body.id === this.enemygoalbox) {
-      this.io.emit('winner', 'Hero');
+      this.io.to(this.code).emit('winner', 'Hero');
     }
   }
 

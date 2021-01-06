@@ -36,24 +36,29 @@ SpawnBullets.prototype.initialize = function() {
     // Only used by server
     this.spawnPoints = {};
     
+    this.isSingle = false;
+    
     this.app.on('setBullets', function(bullets) {
        self.setBullets(bullets); 
     });
+    
+    this.app.on('startSingle', function() {
+        this.isSingle = true;
+    }, this);
 };
 
 SpawnBullets.prototype.update = function(dt) {
     if (this.app.mouse.isPressed(pc.MOUSEBUTTON_LEFT) && this.mouseclicked === false) {
-        ///*
-        var team = this.entity.tags.list()[0];
-        var spawnPoint = this.spawnPoint.getPosition();
-        var gunVec = this.gun.forward.scale(this.bulletImpulse);
-        this.app.fire('bulletFired', {
-            team, spawnPoint, gunVec
-        });
-        //*/
-        ///*Server or debuggin code
-        // this.shoot();
-        //*/
+        if (this.isSingle) {
+            this.shoot();
+        } else {
+            var team = this.entity.tags.list()[0];
+            var spawnPoint = this.spawnPoint.getPosition();
+            var gunVec = this.gun.forward.scale(this.bulletImpulse);
+            this.app.fire('bulletFired', {
+                team, spawnPoint, gunVec
+            });
+        }
         this.mouseclicked = true;
     }
     if (!this.app.mouse.isPressed(pc.MOUSEBUTTON_LEFT)) {
@@ -118,7 +123,6 @@ SpawnBullets.prototype.shootFromClient = function(q) {
 
 // Client code
 SpawnBullets.prototype.setBullets = function(bullets) {
-    console.log(bullets.length);
     var localBullets = this.bullets;
     var self = this;
     bullets.forEach(function(bullet) {

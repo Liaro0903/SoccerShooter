@@ -5,34 +5,34 @@ InputName.prototype.initialize = function() {
     this.canType = false;
     this.firstStroke = true;
     var self = this;
-    var InputImg = this.app.root.findByName('InputImg');
+    // var parent = this.entity.parent;
+    this.text = this.entity.children[0];
     
     this.entity.element.on('click', function() {
-        self.canType = true;
-        InputImg.element.opacity = 1;
-    });
+        if (this.canType) {
+            this.entity.element.opacity = 0.6;
+        } else {
+            this.entity.element.opacity = 1;
+        }
+        this.canType = !this.canType;
+    }, this);
     
     this.app.keyboard.on(pc.EVENT_KEYDOWN, this.onKeyDown, this);
-};
-
-// update code called every frame
-InputName.prototype.update = function(dt) {
-    
 };
 
 InputName.prototype.onKeyDown = function(event) {
     if (this.canType) {
         if (this.firstStroke) {
             this.firstStroke = false;
-            this.entity.element.text = '';
+            this.text.element.text = '';
         }
         if (event.key >= 65 && event.key <= 90) {
-            var s = this.entity.element.text;
+            var s = this.text.element.text;
             s += String.fromCharCode(event.key);
-            this.entity.element.text = s;
+            this.text.element.text = s;
         }
         if (event.key === 8) {
-            this.entity.element.text = this.entity.element.text.substring(0, this.entity.element.text.length - 1);
+            this.text.element.text = this.text.element.text.substring(0, this.text.element.text.length - 1);
         }
     }
 };
