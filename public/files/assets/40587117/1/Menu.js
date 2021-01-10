@@ -78,13 +78,15 @@ Menu.prototype.startMultiMenu = function() {
         joinBtn.addEventListener('click', function() {
             if (self.usernameValid(username, form)) {
                 self.app.fire('isRoomValid', gameCode.value);
-                self.app.on('foundIsRoomValid', function(result) {
-                    if (result && !passedHere) {
-                        passedHere = true;  // For some reason, it will call these twice, so use passedHere to limit once
-                        self.startMultiPlayingScreen();
-                        self.app.fire('joinRoom', gameCode.value, username.value);
+                self.app.on('foundIsRoomValid', function(message) {
+                    if (message === '') {
+                        if (!passedHere) {
+                            passedHere = true;  // For some reason, it will call these twice, so use passedHere to limit once
+                            self.startMultiPlayingScreen();
+                            self.app.fire('joinRoom', gameCode.value, username.value);
+                        }
                     } else {
-                        self.generateWarning(form);
+                        self.generateWarning(form, message);
                     }
                 });
             }
@@ -95,20 +97,22 @@ Menu.prototype.startMultiMenu = function() {
 /* Helper method for host and join btn */
 Menu.prototype.usernameValid = function(username, form) {
     if (username.value === '') {
-        this.generateWarning(form);
+        this.generateWarning(form, 'Invalid Display name');
         return false;
     } else {
         return true;
     }
 };
 
-Menu.prototype.generateWarning = function(form) {
+Menu.prototype.generateWarning = function(form, message) {
     var warning = document.getElementById('warning');
     if (warning === null) {
         warning = document.createElement('div');
         warning.id = 'warning';
-        warning.textContent = 'Warning: Input Invalid';
+        warning.textContent = 'Warning: ' + message;
         form.appendChild(warning);
+    } else {
+        warning.textContent = 'Warning: ' + message;
     }
 };
 

@@ -39,7 +39,6 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('createRoom', (username: string) => {
     let roomCode: string = generateRoomCode();
-    console.log(roomCode);
     
     rooms[roomCode] = new Room(roomCode, io);
     rooms[roomCode].playerJoinRoom(socket, username);
@@ -50,7 +49,15 @@ io.on('connection', (socket: Socket) => {
   });
 
   socket.on('isRoomValid', (roomCode: string) => {
-    socket.emit('foundIsRoomValid', rooms.hasOwnProperty(roomCode));
+    let message = '';
+    if (rooms.hasOwnProperty(roomCode)) {
+      if (rooms[roomCode].players.length === 6) {
+        message = 'Room Full';
+      }
+    } else {
+      message = 'Invalid Room Code';
+    }
+    socket.emit('foundIsRoomValid', message);
   });
 
   socket.on('joinRoom', (roomCode: string, username: string) => {

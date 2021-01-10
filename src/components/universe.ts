@@ -18,9 +18,10 @@ class Universe {
   io: Server;
   code: string;
   timer: any;
+  nextGame: Function;
 
   /* Constructs the world */
-  constructor(code: string, io: Server) {
+  constructor(code: string, io: Server, nextGame: Function) {
     // Setup world
     this.world = new CANNON.World();
     this.world.gravity.set(0, 0, -9.81);
@@ -32,6 +33,7 @@ class Universe {
     this.enemygoalbox = 0;
     this.io = io;
     this.code = code;
+    this.nextGame = nextGame;
 
     // Setup Ball
     this.sphereMaterial = new CANNON.Material('sphere');
@@ -158,10 +160,19 @@ class Universe {
     // When player goals
     if ((e.body.id) === this.herogoalbox) {
       this.io.to(this.code).emit('winner', 'Enemy');
+      this.nextGame();
     }
     if (e.body.id === this.enemygoalbox) {
       this.io.to(this.code).emit('winner', 'Hero');
+      this.nextGame();
     }
+  }
+
+  newGame = () => {
+    this.ball.body.position = new CANNON.Vec3(0, 0, 10);
+    this.ball.body.quaternion = new CANNON.Quaternion(0, 0, 0, 1);
+    this.ball.body.sleep();
+    this.ball.body.wakeUp();
   }
 
   /* Shuts down the world. Removes all body in world so then it can be garbage collected */

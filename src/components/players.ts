@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { Vector } from '../types';
+import { initialPlayersRepeat, initialPlayerRepeat, Vector } from '../types';
 
 const spawnLocations: Vector[] = [
   { x: -4, y: 4, z:  0 },  // Hero Side 1
@@ -16,7 +16,7 @@ const spawnRotation: Vector[] = [
   { x: 0, y: 0, z: 0},
 ]
 
-class Player {
+export class Player {
   id: string;
   title: string;
   team: string;
@@ -78,6 +78,44 @@ class Players {
 
   getLength() {
     return this.length;
+  }
+
+  shuffle() {
+    let { players } = this;
+    let userIds = Object.keys(players);
+    
+    let currentIndex = userIds.length, temporaryValue, randomIndex;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element
+      temporaryValue = userIds[currentIndex];
+      userIds[currentIndex] = userIds[randomIndex];
+      userIds[randomIndex] = temporaryValue;
+    }
+
+    let initialPlayersRepeat: initialPlayersRepeat = {};
+    userIds.forEach((userId: string, index: number) => {
+      // Update server players
+      let player = players[userId];
+      player.team = index % 2 === 0 ? 'Hero' : 'Enemy';
+      player.position = Object.assign({}, spawnLocations[index]);
+      player.rotation = Object.assign({}, spawnRotation[index % 2]);
+      
+      // Update client players
+      let initialPlayerRepeat: initialPlayerRepeat = {
+        id: userId,
+        team: index % 2 === 0 ? 'Hero' : 'Enemy',
+        position: Object.assign({}, spawnLocations[index]),
+        rotation: Object.assign({}, spawnRotation[index % 2]),
+      }
+      initialPlayersRepeat[userId] = initialPlayerRepeat;
+    });
+    return initialPlayersRepeat;
   }
 }
 

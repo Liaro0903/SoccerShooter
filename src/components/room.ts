@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 
+import { initialData } from '../types';
 import Players from './players';
 import Universe from './universe';
 
@@ -11,7 +12,7 @@ class Room {
 
   constructor(code: string, io: Server) {
     this.code = code;
-    this.universe = new Universe(code, io);
+    this.universe = new Universe(code, io, this.nextGame);
     this.players = new Players();
     this.io = io;
   }
@@ -26,11 +27,12 @@ class Room {
     }
     let newPlayer = players.addPlayer(socket, username);
     console.log(players);
-    socket.emit('playerData', {
-      id: socket.id,
-      room: this.code,
+    let initialData: initialData = {
+      myId: socket.id,
+      myRoom: this.code,
       players: players.players,
-    });
+    }
+    socket.emit('initialData', initialData);
     socket.to(code).broadcast.emit('setLocalPlayers', newPlayer);
   }
 
@@ -44,6 +46,20 @@ class Room {
     }
     // Clear world if last player left
     if (players.length === 0) this.universe.clearPhysics();
+  }
+
+  nextGame = () => {
+    const { io, code, players, universe } = this;
+    let timeleft = 10;
+    let countDownToNext = setInterval(() => {
+      io.to(code).emit('nextGame', timeleft);
+      if (timeleft === 0) {
+        clearInterval(countDownToNext);
+        universe.newGame();
+        // io.to(code).emit('initialPlayersRepeat', players.shuffle());
+      }
+      timeleft--;
+    }, 1000);
   }
 }
 

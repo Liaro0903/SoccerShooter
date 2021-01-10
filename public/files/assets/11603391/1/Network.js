@@ -4,7 +4,8 @@ var Network = pc.createScript('network');
 
 Network.prototype.initialize = function() {
     // this.socket = io.connect('https://socshoot0-3.glitch.me');
-    this.socket = io.connect('http://localhost:3000');
+    //this.socket = io.connect('http://localhost:3000');
+    this.socket - io.connect();
     var socket = this.socket;
     var self = this;
     var app = this.app;
@@ -29,25 +30,33 @@ Network.prototype.initialize = function() {
         socket.emit('isRoomValid', code);
     });
     
-    socket.on('foundIsRoomValid', function(result) {
-        app.fire('foundIsRoomValid', result);
+    socket.on('foundIsRoomValid', function(message) {
+        app.fire('foundIsRoomValid', message);
     });
     
     app.on('joinRoom', function(code, username) {
         socket.emit('joinRoom', code, username);
     });
-    /*
-    socket.on ('nextGame', function(time, players) {
-        self.newGame(time, players);
+    
+    // Local practice
+    app.on('nextGame', function(time) {
+        self.newGame(time);
     });
-    */
+    
+    socket.on ('nextGame', function(time) {
+        self.newGame(time);
+    });
     
     /* Sync players */
     
     // After initialized, get all players data
-    socket.on('playerData', function(data) {
+    socket.on('initialData', function(initialData) {
         self.startMultiGame();
-        self.initializePlayers(data);
+        self.initialData(initialData);
+    });
+    
+    socket.on('initialPlayersRepeat', function(initialPlayersRepeat) {
+        self.initialPlayersRepeat(initialPlayersRepeat);
     });
     
     // When new player joined, add the new player
@@ -100,104 +109,126 @@ Network.prototype.startMultiGame = function() {
     this.ball2.enabled = true;
 };
 
-Network.prototype.newGame = function(time, players) {
-    // Old, will be updated
-    var ngt = this.app.root.findByName("NextGameText");
-    if(time === 0) {
-        /*PLAYERS*/
-        //Set scoreText to null;
-        var scoreText = this.app.root.findByName("ScoreText");
-        scoreText.element.text = "";
-        
-        //Set NextGameText to null;
-        ngt.element.text = "";
-        for(var id in this.players){
-            if(id !== this.id){
-                this.players[id].entity.setPosition(players[id].x, players[id].y, players[id].z);
-                this.players[id].team = players[id].team;
-                this.players[id].entity.tags.list[0] = players[id].team;
-            } else {
-                //Move to new place
-                this.player.rigidbody.teleport(players[this.id].x, players[this.id].y, players[this.id].z);
-                this.player.rigidbody.linearVelocity = new pc.Vec3();
-                //Set team
-                this.player.tags.list[0] = players[id].team;
-                
-                //Set teamText
-                var teamText = this.app.root.findByName("TeamText");
-                var teamPlayer = this.player.tags.list()[0];
-                teamText.element.text = "Team " + teamPlayer;
-
-                if(teamPlayer == "Hero") {
-                    this.app.fire("initialEuler");  //Change angle because originally not facing the enemy goal.
-                } else {    //If I am enemy
-                    //Change TeamText color to red.
-                    teamText.element.color.r = 1;
-                    teamText.element.color.b = 0;
-                    teamText.element.color.g = 0;
-                }
-            }
-        }
-        /*BALL*/
-        if(this.host) {
-            this.ball.rigidbody.teleport(0, 10 ,0);
-            this.ball.rigidbody.linearVelocity = new pc.Vec3();
-            this.ball.rigidbody.angularVelocity = new pc.Vec3();
-        }
+Network.prototype.newGame = function(time) {
+    var ngt = this.app.root.findByName('NextGameText');
+    ngt.enabled = true;
+    if (time === 0) {
+        ngt.enabled = false;
+        var scoreText = this.app.root.findByName('ScoreText');
+        scoreText.element.text = '';
     } else {
-        ngt.element.text = "Next Game in " + time;
+        ngt.element.text = 'Next Game in ' + time;
     }
 };
 
+/*
+interface Players {
+    id: string;
+    title: string;
+    team: string;
+    position: Vector;
+    rotation: Vector;
+    entity: pc.Entity;
+}
+*/
+
 /* Sync players */
-Network.prototype.initializePlayers = function(data) {
-    this.players = data.players;
-    this.id = data.id;
-    this.room = data.room;
+
+/*
+ * Method only calls on when player joined
+ * Props: data: {
+ *     id: string;
+ *     room: string;
+ *     players: players;
+ * }
+ */
+Network.prototype.initialData = function(initialData) {
+    this.id = initialData.myId;
+    this.room = initialData.myRoom;
+    this.players = initialData.players;
     
     // UI updates
-    var myTeam = this.players[this.id].team;
-    this.app.fire('updateConnected', Object.keys(this.players).length);
     this.app.fire('updateCode', this.room);
-    this.app.fire('updateTeam', myTeam);
+    this.app.fire('updateConnected', Object.keys(this.players).length);
     
     // Create player entities
     this.players[this.id].entity = this.player;
-    this.player.tags.add(myTeam);
-    this.player.rigidbody.teleport(this.players[this.id].position.x, this.players[this.id].position.y, this.players[this.id].position.z);
-    if (myTeam === 'Hero') {
-        this.app.fire('initialEulerHero'); // this.player.setEulerAngles(0, 270, 0);
-    } else {
-        this.app.fire('initialEnemy'); // this.player.setEulerAngles(0, 90, 0);
-    }
     
-    // For every player already connected, create a new capsule entity.
-    for (var id in this.players) {
-        if (id !== data.id) {
-            this.players[id].entity = this.createPlayerEntity(this.players[id]);
-        }
-    }
+    this.initialPlayersRepeat(this.players);
 
     // Mark that the client has received data from the server.
     this.initialized = true;
 };
 
-Network.prototype.createPlayerEntity = function(player) {
+// Method calls on future new game too
+// Props: Depending on when calling this. It can be initialPlayers or initialPlayersRepeat
+Network.prototype.initialPlayersRepeat = function(initialPlayers) {
+    // Update my team
+    var myTeam = initialPlayers[this.id].team;
+    this.app.fire('updateTeam', myTeam);  // UI update
+    this.player.tags.clear();
+    this.player.tags.add(myTeam);
+    
+    // Update my dsdr
+    this.player.rigidbody.teleport(
+        initialPlayers[this.id].position.x,
+        initialPlayers[this.id].position.y,
+        initialPlayers[this.id].position.z
+    );
+    if (myTeam === 'Hero') {
+        this.app.fire('initialEulerHero');
+    } else {
+        this.app.fire('initialEnemy');
+    }
+    
+    // Update other players
+    for (var id in initialPlayers) {
+        if (id !== this.id) {
+            if (!this.players[id].entity) {  // Separate this so new game event can utilize this method as well.
+                // For every player already connected, create a new capsule entity.
+                this.players[id].entity = this.initialOther(this.players[id]);
+            }
+            this.initialOtherRepeat(this.players[id].entity, initialPlayers[id]);
+        }
+    }
+};
+
+Network.prototype.initialOther = function(player) {
     var newPlayer = this.other.clone();  // Create a new player entity.
-    newPlayer.tags.add(player.team);  // Add tags of the entity
     this.other.getParent().addChild(newPlayer);  // Add the entity to the entity hierarchy.
-    newPlayer.setPosition(player.position.x, player.position.y, player.position.z);  // Teleport the new entity to the position of the connected player.
-    newPlayer.children[1].children[0].element.text = player.title;  // Update title text
-    if (player.team === 'Enemy') newPlayer.children[1].children[0].element.color = new pc.Color(1, 0, 0);  // Update color of text
-    newPlayer.children[2].setLocalEulerAngles(player.rotation.x, player.rotation.y, player.rotation.z);
     newPlayer.enabled = true;
+    
+    // Update title text
+    newPlayer.children[1].children[0].element.text = player.title;
     
     return newPlayer;
 };
 
+// Props can be initialPlayer or initialPlayerRepeat
+Network.prototype.initialOtherRepeat = function(entity, initialPlayer) {
+    // Update team
+    entity.tags.clear();
+    entity.tags.add(initialPlayer.team);  // Add tags of the entity
+    if (initialPlayer.team === 'Enemy')
+        entity.children[1].children[0].element.color = new pc.Color(1, 0, 0);  // Update color of text
+    
+    // Update dsdr
+    entity.setPosition(
+        initialPlayer.position.x,
+        initialPlayer.position.y,
+        initialPlayer.position.z
+    );
+    entity.children[2].setLocalEulerAngles(
+        initialPlayer.rotation.x,
+        initialPlayer.rotation.y,
+        initialPlayer.rotation.z
+    );
+};
+
 Network.prototype.addPlayer = function(newPlayer) {
     this.players[newPlayer.id] = newPlayer;
-    this.players[newPlayer.id].entity = this.createPlayerEntity(this.players[newPlayer.id]);
+    this.players[newPlayer.id].entity = this.initialOther(this.players[newPlayer.id]);
+    this.initialOtherRepeat(this.players[newPlayer.id].entity, newPlayer);
     this.app.fire('updateConnected', Object.keys(this.players).length);
 };
 

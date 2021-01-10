@@ -5,6 +5,11 @@ DisplayTeamText.prototype.initialize = function() {
     var self = this;
     this.app.on('updateTeam', function(team) {
         self.entity.element.text = 'Team ' + team;
-        if (team === 'Enemy') self.entity.element.color = new pc.Color(1, 0, 0);
+        console.log('Pass here');
+        if (team === 'Enemy') {
+            self.entity.element.color = new pc.Color(1, 0, 0);
+        } else {
+            self.entity.element.color = new pc.Color(1, 1, 1);
+        }
     });
 };

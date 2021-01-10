@@ -27,6 +27,7 @@ Score.prototype.onCollisionStart= function(result) {
 // Only works on goalbox, and this function is designed for goalbox.
 Score.prototype.onTriggerEnter = function(result) {
     if (result.name === 'Ball') {    // if goalbox receives ball
+        /* Puppet Server Code, archive
         var team = result.script.score.team;
         // When player goals
         if ((this.entity.name === 'HeroGoalBox' && team === 'Enemy') || (this.entity.name === 'EnemyGoalBox' && team === 'Hero')) {
@@ -38,5 +39,6 @@ Score.prototype.onTriggerEnter = function(result) {
                 this.app.fire('scored', 'Hero');
             }
         }
+        */
     }
 };
