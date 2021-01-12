@@ -5,7 +5,7 @@ var Network = pc.createScript('network');
 Network.prototype.initialize = function() {
     // this.socket = io.connect('https://socshoot0-3.glitch.me');
     //this.socket = io.connect('http://localhost:3000');
-    this.socket - io.connect();
+    this.socket = io.connect();
     var socket = this.socket;
     var self = this;
     var app = this.app;
