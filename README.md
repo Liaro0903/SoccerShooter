@@ -30,5 +30,5 @@ The current method for handling physics is more of a "proof of concept" implemen
 This idea came to me when I was doing some Unreal Engine tutorials, and I thought it will be fun if multiple people can play together. Actual implementation didn't come until I discovered PlayCanvas through my friend. We started working on together but it was sporadic throughout the years. As I learn more about web development, the game has also come to a playable state. This is also the first game I ever made, and also the first time making a multiplayer game as well. 
 
 ---
-#### This project is also listed on my website, ionis-hg.com
+#### This project is also listed on my website, [ionis-hg.com](https://ionis-hg.com)
 
