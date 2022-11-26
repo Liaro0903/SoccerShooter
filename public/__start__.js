@@ -1,21 +1,101 @@
 (function () {
+    // Shared Lib
     var CANVAS_ID = 'application-canvas';
 
-    var canvas, devices, app;
+    // Needed as we will have edge cases for particlar versions of iOS
+    // returns null if not iOS
+    var getIosVersion = function () {
+        if (/iP(hone|od|ad)/.test(navigator.platform)) {
+            var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+            var version = [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
+            return version;
+        }
 
-    var createCanvas = function () {
-        canvas = document.createElement('canvas');
-        canvas.setAttribute('id', CANVAS_ID);
-        canvas.setAttribute('tabindex', 0);
-        // canvas.style.visibility = 'hidden';
-
-        // Disable I-bar cursor on click+drag
-        canvas.onselectstart = function () { return false; };
-
-        document.body.appendChild(canvas);
-
-        return canvas;
+        return null;
     };
+
+    var lastWindowHeight = window.innerHeight;
+    var lastWindowWidth = window.innerWidth;
+    var windowSizeChangeIntervalHandler = null;
+
+    var pcBootstrap = {
+        reflowHandler: null,
+        iosVersion: getIosVersion(),
+
+        createCanvas: function () {
+            canvas = document.createElement('canvas'); // eslint-disable-line no-global-assign
+            canvas.setAttribute('id', CANVAS_ID);
+            canvas.setAttribute('tabindex', 0);
+            // canvas.style.visibility = 'hidden';
+
+            // Disable I-bar cursor on click+drag
+            canvas.onselectstart = function () { return false; };
+
+            // Disable long-touch select on iOS devices
+            canvas.style['-webkit-user-select'] = 'none';
+
+            document.body.appendChild(canvas);
+
+            return canvas;
+        },
+
+
+        resizeCanvas: function (app, canvas) {
+            canvas.style.width = '';
+            canvas.style.height = '';
+            app.resizeCanvas(canvas.width, canvas.height);
+
+            var fillMode = app._fillMode;
+
+            if (fillMode == pc.FILLMODE_NONE || fillMode == pc.FILLMODE_KEEP_ASPECT) {
+                if ((fillMode == pc.FILLMODE_NONE && canvas.clientHeight < window.innerHeight) || (canvas.clientWidth / canvas.clientHeight >= window.innerWidth / window.innerHeight)) {
+                    canvas.style.marginTop = Math.floor((window.innerHeight - canvas.clientHeight) / 2) + 'px';
+                } else {
+                    canvas.style.marginTop = '';
+                }
+            }
+
+            lastWindowHeight = window.innerHeight;
+            lastWindowWidth = window.innerWidth;
+
+            // Work around when in landscape to work on iOS 12 otherwise
+            // the content is under the URL bar at the top
+            if (this.iosVersion && this.iosVersion[0] <= 12) {
+                window.scrollTo(0, 0);
+            }
+        },
+
+        reflow: function (app, canvas) {
+            this.resizeCanvas(app, canvas);
+
+            // Poll for size changes as the window inner height can change after the resize event for iOS
+            // Have one tab only, and rotrait to portrait -> landscape -> portrait
+            if (windowSizeChangeIntervalHandler === null) {
+                windowSizeChangeIntervalHandler = setInterval(function () {
+                    if (lastWindowHeight !== window.innerHeight || lastWindowWidth !== window.innerWidth) {
+                        this.resizeCanvas(app, canvas);
+                    }
+                }.bind(this), 100);
+
+                // Don't want to do this all the time so stop polling after some short time
+                setTimeout(function () {
+                    if (!!windowSizeChangeIntervalHandler) {
+                        clearInterval(windowSizeChangeIntervalHandler);
+                        windowSizeChangeIntervalHandler = null;
+                    }
+                }, 2000);
+            }
+        }
+    };
+
+    // Expose the reflow to users so that they can override the existing
+    // reflow logic if need be
+    window.pcBootstrap = pcBootstrap;
+})();
+
+
+(function () {
+    var canvas, devices, app;
 
     var createInputDevices = function (canvas) {
         var devices = {
@@ -53,22 +133,6 @@
         }
     };
 
-    var reflow = function () {
-        app.resizeCanvas(canvas.width, canvas.height);
-        canvas.style.width = '';
-        canvas.style.height = '';
-
-        var fillMode = app._fillMode;
-
-        if (fillMode == pc.FILLMODE_NONE || fillMode == pc.FILLMODE_KEEP_ASPECT) {
-            if ((fillMode == pc.FILLMODE_NONE && canvas.clientHeight < window.innerHeight) || (canvas.clientWidth / canvas.clientHeight >= window.innerWidth / window.innerHeight)) {
-                canvas.style.marginTop = Math.floor((window.innerHeight - canvas.clientHeight) / 2) + 'px';
-            } else {
-                canvas.style.marginTop = '';
-            }
-        }
-    };
-
     var displayError = function (html) {
         var div = document.createElement('div');
 
@@ -87,7 +151,7 @@
         document.body.appendChild(div);
     };
 
-    canvas = createCanvas();
+    canvas = pcBootstrap.createCanvas();
     devices = createInputDevices(canvas);
 
     try {
@@ -124,20 +188,28 @@
 
             configureCss(app._fillMode, app._width, app._height);
 
+            const ltcMat1 = []; 
+            const ltcMat2 = []; 
+
+            if (ltcMat1.length && ltcMat2.length && app.setAreaLightLuts.length === 2) {
+                app.setAreaLightLuts(ltcMat1, ltcMat2);
+            }
+
             // do the first reflow after a timeout because of
             // iOS showing a squished iframe sometimes
             setTimeout(function () {
-                reflow();
+                pcBootstrap.reflow(app, canvas);
+                pcBootstrap.reflowHandler = function () { pcBootstrap.reflow(app, canvas); };
 
-                window.addEventListener('resize', reflow, false);
-                window.addEventListener('orientationchange', reflow, false);
+                window.addEventListener('resize', pcBootstrap.reflowHandler, false);
+                window.addEventListener('orientationchange', pcBootstrap.reflowHandler, false);
 
                 app.preload(function (err) {
                     if (err) {
                         console.error(err);
                     }
 
-                    app.loadScene(SCENE_PATH, function (err, scene) {
+                    app.scenes.loadScene(SCENE_PATH, function (err, scene) {
                         if (err) {
                             console.error(err);
                         }
@@ -154,5 +226,4 @@
     } else {
         configure();
     }
-
 })();
