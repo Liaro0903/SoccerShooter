@@ -12,7 +12,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'https://launch.playcanvas.com',
+    // origin: 'https://launch.playcanvas.com',
+    origin: 'https://playcanv.as',
     methods: ['GET', 'POST']
   }
 });

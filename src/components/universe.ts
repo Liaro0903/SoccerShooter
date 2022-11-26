@@ -37,6 +37,8 @@ class Universe {
 
     // Setup Ball
     this.sphereMaterial = new CANNON.Material('sphere');
+    this.sphereMaterial.friction = 0.5;
+    this.sphereMaterial.restitution = 1.5;
     let radius = 1;
     this.ball = {
       body: new CANNON.Body({
@@ -53,7 +55,13 @@ class Universe {
 
     // Create walls and borders
     let groundMaterial = new CANNON.Material('ground');
+    groundMaterial.friction = 0.5;
+    groundMaterial.restitution = 1.5;
+    console.log('groundmaterial', groundMaterial);
+    // let wallMaterial = new CANNON.Material('wall');
     scene.forEach((entity: IEntity) => {
+      // if (entity.name === 'Wall') console.log('Found wall');
+      // let groundBody = this.createEntity(entity, entity.name === 'Wall' ? wallMaterial : groundMaterial);
       let groundBody = this.createEntity(entity, groundMaterial);
       this.world.addBody(groundBody);
       if (entity.name === 'HeroGoalBox') {
@@ -67,11 +75,16 @@ class Universe {
     });
 
     // Ball bouncing behavior
-    let mat_ballGround = new CANNON.ContactMaterial(groundMaterial, this.sphereMaterial, {
-      friction: 0.5,
-      restitution: 0.5,
-    });
-    this.world.addContactMaterial(mat_ballGround);
+    // let mat_ballGround = new CANNON.ContactMaterial(groundMaterial, this.sphereMaterial, {
+    //   friction: 0.5,
+    //   restitution: 0.5,
+    // });
+    // let mat_ballWall = new CANNON.ContactMaterial(wallMaterial, this.sphereMaterial, {
+    //   friction: 0.5,
+    //   restitution: 0.99,
+    // }); 
+    // this.world.addContactMaterial(mat_ballGround);
+    // this.world.addContactMaterial(mat_ballWall);
   }
 
   /* Helper method of constructor */
@@ -188,106 +201,43 @@ class Universe {
 
 export default Universe;
 
+// Level_1-2 scene
 const scene: IEntity[] = [
   {
-    name: 'InvisibleWalls',
-    position: {
-      x: -57.07099914550781,
-      y: 7.071000099182129,
-      z: 32.07099914550781
-    },
-    size: { x: 0.01, y: 10, z: 7.071 },
-    rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
-  },
-  {
-    name: 'InvisibleWalls',
-    position: {
-      x: -57.07099914550781,
-      y: 7.071000099182129,
-      z: -32.07099914550781
-    },
-    size: { x: 0.01, y: 10, z: 7.071 },
-    rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
-  },
-  {
-    name: 'InvisibleWalls',
-    position: {
-      x: 57.07099914550781,
-      y: 7.071000099182129,
-      z: 32.07099914550781
-    },
-    size: { x: 0.01, y: 10, z: 7.071 },
-    rotation: { x: 0, y: 0, z: -0.38264587575991654, w: 0.9238950880721937 }
-  },
-  {
-    name: 'InvisibleWalls',
-    position: {
-      x: 57.07099914550781,
-      y: 7.071000099182129,
-      z: -32.07099914550781
-    },
-    size: { x: 0.01, y: 10, z: 7.071 },
-    rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: -64.14199829101562, y: 27.070999145507812, z: 0 },
-    size: { x: 0.01, y: 12.929, z: 39.142 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: 64.14199829101562, y: 27.070999145507812, z: 0 },
-    size: { x: 0.01, y: 12.929, z: 39.142 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: 0, y: 27.070999145507812, z: 39.141998291015625 },
-    size: { x: 64.142, y: 12.929, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: 0, y: 27.070999145507812, z: -39.141998291015625 },
-    size: { x: 64.142, y: 12.929, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
     name: 'InvisibleCeiling',
-    position: { x: 0, y: 40, z: 0 },
-    size: { x: 64.142, y: 0.01, z: 39.142 },
+    position: { x: 0, y: 20, z: 0 },
+    size: { x: 50, y: 0.01, z: 25 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
     name: 'Wall',
-    position: { x: 0, y: 7.071000099182129, z: -32.07099914550781 },
-    size: { x: 64.142, y: 0, z: 10 },
-    rotation: { x: 0.38268343236508984, y: 0, z: 0, w: 0.9238795325112867 }
+    position: { x: 0, y: 10, z: -25 },
+    size: { x: 50, y: 0, z: 10 },
+    rotation: { x: 0.7071067811865475, y: 0, z: 0, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: 0, y: 7.071000099182129, z: 32.07099914550781 },
-    size: { x: 64.142, y: 0, z: 10 },
-    rotation: { x: -0.38268343236508984, y: 0, z: 0, w: 0.9238795325112867 }
+    position: { x: 0, y: 10, z: 25 },
+    size: { x: 50, y: 0, z: 10 },
+    rotation: { x: -0.7071067811865475, y: 0, z: 0, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: -57.07099914550781, y: 7.071000099182129, z: 15 },
+    position: { x: -50, y: 10, z: 15 },
     size: { x: 10, y: 0, z: 10 },
-    rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+    rotation: { x: 0, y: 0, z: -0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: -57.07099914550781, y: 7.071000099182129, z: -15 },
+    position: { x: -50, y: 10, z: -15 },
     size: { x: 10, y: 0, z: 10 },
-    rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+    rotation: { x: 0, y: 0, z: -0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: -58.8390007019043, y: 8.83899974822998, z: 0 },
-    size: { x: 7.5, y: 0, z: 5 },
-    rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+    position: { x: -50, y: 12.017999649047852, z: 0 },
+    size: { x: 7.982, y: 0, z: 5 },
+    rotation: { x: 0, y: 0, z: -0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'GoalWall',
@@ -309,7 +259,7 @@ const scene: IEntity[] = [
   },
   {
     name: 'HeroGoalBox',
-    position: { x: -52, y: 1.7680000066757202, z: 0 },
+    position: { x: -51.900001525878906, y: 1.7680000066757202, z: 0 },
     size: { x: 2, y: 1.768, z: 5 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
@@ -327,14 +277,14 @@ const scene: IEntity[] = [
   },
   {
     name: 'InvisibleBorder',
-    position: { x: -70, y: -20, z: 25 },
-    size: { x: 20, y: 20, z: 0.01 },
+    position: { x: -70, y: 0, z: 25 },
+    size: { x: 20, y: 40, z: 0.01 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
     name: 'InvisibleBorder',
-    position: { x: -70, y: -20, z: -25 },
-    size: { x: 20, y: 20, z: 0.01 },
+    position: { x: -70, y: 0, z: -25 },
+    size: { x: 20, y: 40, z: 0.01 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
@@ -344,34 +294,22 @@ const scene: IEntity[] = [
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
-    name: 'InvisibleBorder',
-    position: { x: -77.07099914550781, y: 20, z: 25 },
-    size: { x: 12.929, y: 20, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: -77.07099914550781, y: 20, z: -25 },
-    size: { x: 12.929, y: 20, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
     name: 'Wall',
-    position: { x: 57.07099914550781, y: 7.071000099182129, z: 15 },
+    position: { x: 50, y: 10, z: 15 },
     size: { x: 10, y: 0, z: 10 },
-    rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+    rotation: { x: 0, y: 0, z: 0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: 57.07099914550781, y: 7.071000099182129, z: -15 },
+    position: { x: 50, y: 10, z: -15 },
     size: { x: 10, y: 0, z: 10 },
-    rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+    rotation: { x: 0, y: 0, z: 0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'Wall',
-    position: { x: 58.8380012512207, y: 8.83899974822998, z: 0 },
-    size: { x: 7.5, y: 0, z: 5 },
-    rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+    position: { x: 50, y: 12.017999649047852, z: 0 },
+    size: { x: 7.982, y: 0, z: 5 },
+    rotation: { x: 0, y: 0, z: 0.7071067811865475, w: 0.7071067811865476 }
   },
   {
     name: 'GoalWall',
@@ -393,7 +331,7 @@ const scene: IEntity[] = [
   },
   {
     name: 'EnemyGoalBox',
-    position: { x: 52, y: 1.7680000066757202, z: 0 },
+    position: { x: 51.900001525878906, y: 1.7680000066757202, z: 0 },
     size: { x: 2, y: 1.768, z: 5 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
@@ -411,14 +349,14 @@ const scene: IEntity[] = [
   },
   {
     name: 'InvisibleBorder',
-    position: { x: 70, y: -20, z: 25 },
-    size: { x: 20, y: 20, z: 0.01 },
+    position: { x: 70, y: 0, z: 25 },
+    size: { x: 20, y: 40, z: 0.01 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
     name: 'InvisibleBorder',
-    position: { x: 70, y: -20, z: -25 },
-    size: { x: 20, y: 20, z: 0.01 },
+    position: { x: 70, y: 0, z: -25 },
+    size: { x: 20, y: 40, z: 0.01 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
@@ -428,21 +366,269 @@ const scene: IEntity[] = [
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   },
   {
-    name: 'InvisibleBorder',
-    position: { x: 77.07099914550781, y: 20, z: 25 },
-    size: { x: 12.929, y: 20, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
-    name: 'InvisibleBorder',
-    position: { x: 77.07099914550781, y: 20, z: -25 },
-    size: { x: 12.929, y: 20, z: 0.01 },
-    rotation: { x: 0, y: 0, z: 0, w: 1 }
-  },
-  {
     name: 'WalkingSurface',
     position: { x: 0, y: 0, z: 0 },
     size: { x: 50, y: 0, z: 25 },
     rotation: { x: 0, y: 0, z: 0, w: 1 }
   }
 ]
+
+// Level_1 scenes
+// const scene: IEntity[] = [
+//   {
+//     name: 'InvisibleWalls',
+//     position: {
+//       x: -57.07099914550781,
+//       y: 7.071000099182129,
+//       z: 32.07099914550781
+//     },
+//     size: { x: 0.01, y: 10, z: 7.071 },
+//     rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'InvisibleWalls',
+//     position: {
+//       x: -57.07099914550781,
+//       y: 7.071000099182129,
+//       z: -32.07099914550781
+//     },
+//     size: { x: 0.01, y: 10, z: 7.071 },
+//     rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'InvisibleWalls',
+//     position: {
+//       x: 57.07099914550781,
+//       y: 7.071000099182129,
+//       z: 32.07099914550781
+//     },
+//     size: { x: 0.01, y: 10, z: 7.071 },
+//     rotation: { x: 0, y: 0, z: -0.38264587575991654, w: 0.9238950880721937 }
+//   },
+//   {
+//     name: 'InvisibleWalls',
+//     position: {
+//       x: 57.07099914550781,
+//       y: 7.071000099182129,
+//       z: -32.07099914550781
+//     },
+//     size: { x: 0.01, y: 10, z: 7.071 },
+//     rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -64.14199829101562, y: 27.070999145507812, z: 0 },
+//     size: { x: 0.01, y: 12.929, z: 39.142 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 64.14199829101562, y: 27.070999145507812, z: 0 },
+//     size: { x: 0.01, y: 12.929, z: 39.142 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 0, y: 27.070999145507812, z: 39.141998291015625 },
+//     size: { x: 64.142, y: 12.929, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 0, y: 27.070999145507812, z: -39.141998291015625 },
+//     size: { x: 64.142, y: 12.929, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleCeiling',
+//     position: { x: 0, y: 40, z: 0 },
+//     size: { x: 64.142, y: 0.01, z: 39.142 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: 0, y: 7.071000099182129, z: -32.07099914550781 },
+//     size: { x: 64.142, y: 0, z: 10 },
+//     rotation: { x: 0.38268343236508984, y: 0, z: 0, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: 0, y: 7.071000099182129, z: 32.07099914550781 },
+//     size: { x: 64.142, y: 0, z: 10 },
+//     rotation: { x: -0.38268343236508984, y: 0, z: 0, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: -57.07099914550781, y: 7.071000099182129, z: 15 },
+//     size: { x: 10, y: 0, z: 10 },
+//     rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: -57.07099914550781, y: 7.071000099182129, z: -15 },
+//     size: { x: 10, y: 0, z: 10 },
+//     rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: -58.8390007019043, y: 8.83899974822998, z: 0 },
+//     size: { x: 7.5, y: 0, z: 5 },
+//     rotation: { x: 0, y: 0, z: -0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: -50.51129913330078, y: 1.7669999599456787, z: 5 },
+//     size: { x: 3, y: 1.768, z: 0.25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: -50.51129913330078, y: 1.7669999599456787, z: -5 },
+//     size: { x: 3, y: 1.768, z: 0.25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: -50.51129913330078, y: 3.7860000133514404, z: 0 },
+//     size: { x: 3, y: 5.25, z: 0.25 },
+//     rotation: { x: 0.7071067811865475, y: 0, z: 0, w: 0.7071067811865476 }
+//   },
+//   {
+//     name: 'HeroGoalBox',
+//     position: { x: -52, y: 1.7680000066757202, z: 0 },
+//     size: { x: 2, y: 1.768, z: 5 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -90, y: 0, z: 0 },
+//     size: { x: 0.01, y: 40, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -50, y: -20, z: 0 },
+//     size: { x: 0.01, y: 20, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -70, y: -20, z: 25 },
+//     size: { x: 20, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -70, y: -20, z: -25 },
+//     size: { x: 20, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -70, y: -40, z: 0 },
+//     size: { x: 20, y: 0.01, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -77.07099914550781, y: 20, z: 25 },
+//     size: { x: 12.929, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: -77.07099914550781, y: 20, z: -25 },
+//     size: { x: 12.929, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: 57.07099914550781, y: 7.071000099182129, z: 15 },
+//     size: { x: 10, y: 0, z: 10 },
+//     rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: 57.07099914550781, y: 7.071000099182129, z: -15 },
+//     size: { x: 10, y: 0, z: 10 },
+//     rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'Wall',
+//     position: { x: 58.8380012512207, y: 8.83899974822998, z: 0 },
+//     size: { x: 7.5, y: 0, z: 5 },
+//     rotation: { x: 0, y: 0, z: 0.38268343236508984, w: 0.9238795325112867 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: 50.51100158691406, y: 1.7669999599456787, z: 5 },
+//     size: { x: 3, y: 1.768, z: 0.25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: 50.51100158691406, y: 1.7669999599456787, z: -5 },
+//     size: { x: 3, y: 1.768, z: 0.25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'GoalWall',
+//     position: { x: 50.51100158691406, y: 3.7860000133514404, z: 0 },
+//     size: { x: 3, y: 5.25, z: 0.25 },
+//     rotation: { x: 0.7071067811865475, y: 0, z: 0, w: 0.7071067811865476 }
+//   },
+//   {
+//     name: 'EnemyGoalBox',
+//     position: { x: 52, y: 1.7680000066757202, z: 0 },
+//     size: { x: 2, y: 1.768, z: 5 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 90, y: 0, z: 0 },
+//     size: { x: 0.01, y: 40, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 50, y: -20, z: 0 },
+//     size: { x: 0.01, y: 20, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 70, y: -20, z: 25 },
+//     size: { x: 20, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 70, y: -20, z: -25 },
+//     size: { x: 20, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 70, y: -40, z: 0 },
+//     size: { x: 20, y: 0.01, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 77.07099914550781, y: 20, z: 25 },
+//     size: { x: 12.929, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'InvisibleBorder',
+//     position: { x: 77.07099914550781, y: 20, z: -25 },
+//     size: { x: 12.929, y: 20, z: 0.01 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   },
+//   {
+//     name: 'WalkingSurface',
+//     position: { x: 0, y: 0, z: 0 },
+//     size: { x: 50, y: 0, z: 25 },
+//     rotation: { x: 0, y: 0, z: 0, w: 1 }
+//   }
+// ]
